@@ -1,23 +1,6 @@
 #include "lmic-wrapper.h"
 
-/** User defined pin mappings **/
-// Not shown: MOSI, MISO, SCK (i.e. physical connections without
-// definitions)
-const lmic_pinmap lmic_pins = {
-        .nss = G0, // SPI chip select (SS, NSS, CS)
-        .rxtx = LMIC_UNUSED_PIN,
-        .rst = G1, // Reset pin (a digital pin)
-        .dio = { G2, G3, G4 }, // Radio pins (0 and 1 required for LoRa)
-        .rxtx_rx_active = 0,
-        .rssi_cal = 8,
-        .spi_freq = 8000000,
-};
-/** End user input **/
-
-static lmic_time_reference_t lmicNetworkTime{};
-void request_network_time_cb(void* pUTCTime, int flagSuccess);
-
-/** Setup LoRa class static variables **/
+// Setup LoRa class static variables
 Stream* LoRa::stream = nullptr;
 osjob_t LoRa::sendjob{};
 ev_t LoRa::last_event = EV_JOINING;
@@ -31,18 +14,23 @@ uint8_t LoRa::APP_EUI[8]{};
 uint8_t LoRa::DEV_EUI[8]{};
 uint8_t LoRa::APP_KEY[16]{};
 
+// Arduino LMIC network time setup, used to get UNIX time over-the-air
+static lmic_time_reference_t lmicNetworkTime{};
+void request_network_time_cb(void* pUTCTime, int flagSuccess);
+
 /** LMIC inbuilt functions **/
 void os_getArtEui (u1_t* buf) { memcpy_P(buf, LoRa::APP_EUI, 8); }
 void os_getDevEui (u1_t* buf) { memcpy_P(buf, LoRa::DEV_EUI, 8); }
 void os_getDevKey (u1_t* buf) { memcpy_P(buf, LoRa::APP_KEY, 16); }
 void onEvent (ev_t ev) { LoRa::on_event(ev); }
+
+// Main LoRaWAN send function, will request network time if not already set
 void send(osjob_t* j, uint8_t* _payload, uint8_t payload_size, uint8_t port) {
     if(!LoRa::is_time_set()){
         LMIC_requestNetworkTime(request_network_time_cb, &lmicNetworkTime);
     }
     LMIC_setTxData2(port, _payload, payload_size, 0);
 }
-
 
 void LoRa::init(Stream* _stream,
                 const uint8_t* app_eui,
@@ -87,14 +75,14 @@ void LoRa::test_connection() {
 }
 
 template <typename T>
-bool LoRa::append_to_payload(T value){
-    if((payload_index + sizeof(value)) > sizeof(payload)){
+bool LoRa::append_to_payload(T packet){
+    if((payload_index + sizeof(packet)) > sizeof(payload)){
         return false;
     }
 
     uint8_t byte_index = 0;
-    for(uint8_t i = 0; i < (uint8_t)sizeof(value.raw); i++){
-        payload[payload_index++] = value.b[byte_index++];
+    for(uint8_t i = 0; i < (uint8_t)sizeof(packet.value); i++){
+        payload[payload_index++] = packet.bytes[byte_index++];
     }
 
     return true;
@@ -144,9 +132,6 @@ void request_network_time_cb(void* pUTCTime, int flagSuccess){
 
 void LoRa::on_event(ev_t ev) {
     set_last_event(ev);
-    bit_t deadline_present = 0;
-    ostime_t delta_time_s;
-    ostime_t deadline;
     switch(ev) {
         case EV_SCAN_TIMEOUT:
             stream->println(F("EV_SCAN_TIMEOUT"));
@@ -173,12 +158,6 @@ void LoRa::on_event(ev_t ev) {
                 set_msg_sent(true);
             } else {
                 stream->println(F("EV_TXCOMPLETE: Scheduled jobs pending."));
-                deadline = os_getNextDeadline(&deadline_present);
-                if(deadline_present == 1){
-                    delta_time_s = osticks2ms(deadline - os_getTime()) / 1000;
-                    stream->print(F("Next deadline: "));
-                    stream->println(delta_time_s);
-                }
             }
             break;
         case EV_TXSTART:
