@@ -135,7 +135,6 @@ void request_network_time_cb(void* pUTCTime, int flagSuccess){
     ostime_t ticks_when_sent = lmicNetworkTime.tLocal;
     unix_time += osticks2ms(ticks_now - ticks_when_sent) / 1000;
 
-    Serial.println(unix_time);
     LoRa::set_unix_time(unix_time);
 
     // Set time_set flag to ensure the network time isn't requested again
