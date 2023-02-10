@@ -68,9 +68,10 @@ public:
 
 	template <typename T>
 	static bool append_to_payload(T value);
-    static bool send_payload(uint8_t* _payload,
-                             uint8_t _payload_size,
-                             uint8_t port = 0);
+    static bool send_payload();
+    static bool send_custom_payload(uint8_t* _payload,
+                                    uint8_t _payload_size,
+                                    uint8_t port = 0);
     static void reset_payload(){
         memset(payload, 0, sizeof(payload));
         payload_index = 0;

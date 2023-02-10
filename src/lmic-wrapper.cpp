@@ -70,7 +70,7 @@ void LoRa::runloop_send(){
 
 void LoRa::test_connection() {
     uint8_t connect[4] = {1, 2, 3, 4};
-    send_payload(connect, sizeof(connect), 1);
+    send_custom_payload(connect, sizeof(connect), 1);
     runloop_send();
 }
 
@@ -88,8 +88,23 @@ bool LoRa::append_to_payload(T packet){
     return true;
 }
 
-bool LoRa::send_payload(uint8_t* _payload, uint8_t _payload_size,
-                        uint8_t port) {
+bool LoRa::send_payload(){
+    set_msg_sent(false);
+
+    // Check if there is not a current TX/RX job running
+    if(LMIC.opmode & OP_TXRXPEND || !LMIC_queryTxReady()){
+        return false;
+    }
+
+    send(&sendjob, payload, LoRa::payload_index, 1);
+    runloop_send();
+
+    return check_sent();
+
+}
+
+bool LoRa::send_custom_payload(uint8_t* _payload, uint8_t _payload_size,
+                               uint8_t port) {
     set_msg_sent(false);
 
     // Check if there is not a current TX/RX job running
