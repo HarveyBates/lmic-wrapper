@@ -5,7 +5,7 @@
  * If possible the current UNIX time will be requested from network.
  */
 #include <Arduino.h>
-#include "lora-wz.h"
+#include "lmic-wrapper.h"
 
 const int32_t sleep_time = 5 * (1000 * 60);
 
