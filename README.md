@@ -38,3 +38,6 @@ void loop() {
     delay(300000);
 }
 ```
+
+## Licence 
+This project is under the GNU LESSER GENERAL PUBLIC LICENSE as found in the LICENCE file.
