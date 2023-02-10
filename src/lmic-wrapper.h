@@ -1,5 +1,5 @@
-#ifndef LORA_WZ_H 
-#define LORA_WZ_H
+#ifndef LMIC_WRAPPER_H
+#define LMIC_WRAPPER_H
 
 #include <Arduino.h>
 
@@ -114,4 +114,4 @@ private:
     static void set_last_event(ev_t ev){ last_event = ev; }
 };
 
-#endif // LORA_WZ_H
+#endif // LMIC_WRAPPER_H

@@ -12,11 +12,8 @@ const lmic_pinmap lmic_pins = {
         .rssi_cal = 8,
         .spi_freq = 8000000,
 };
-
-/** User defined LoRa keys and identifiers **/
-//static const uint8_t PROGMEM APPEUI[8] = { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-//                                           0x00, 0x10 };
 /** End user input **/
+
 static lmic_time_reference_t lmicNetworkTime{};
 void request_network_time_cb(void* pUTCTime, int flagSuccess);
 
@@ -59,8 +56,8 @@ void LoRa::init(Stream* _stream,
     LoRa::set_app_key(app_key);
 
     // Startup arduino-lmic
-	os_init();
-	LMIC_reset();
+    os_init();
+    LMIC_reset();
     LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100);
 
     // Attempt to join
@@ -84,23 +81,23 @@ void LoRa::runloop_send(){
 }
 
 void LoRa::test_connection() {
-	uint8_t connect[4] = {1, 2, 3, 4};
-	send_payload(connect, sizeof(connect), 1);
+    uint8_t connect[4] = {1, 2, 3, 4};
+    send_payload(connect, sizeof(connect), 1);
     runloop_send();
 }
 
 template <typename T>
 bool LoRa::append_to_payload(T value){
-	if((payload_index + sizeof(value)) > sizeof(payload)){
-		return false;
-	}
+    if((payload_index + sizeof(value)) > sizeof(payload)){
+        return false;
+    }
 
-	uint8_t byte_index = 0;
-	for(uint8_t i = 0; i < (uint8_t)sizeof(value.raw); i++){
-		payload[payload_index++] = value.b[byte_index++];
-	}
+    uint8_t byte_index = 0;
+    for(uint8_t i = 0; i < (uint8_t)sizeof(value.raw); i++){
+        payload[payload_index++] = value.b[byte_index++];
+    }
 
-	return true;
+    return true;
 }
 
 bool LoRa::send_payload(uint8_t* _payload, uint8_t _payload_size,
@@ -150,22 +147,22 @@ void LoRa::on_event(ev_t ev) {
     bit_t deadline_present = 0;
     ostime_t delta_time_s;
     ostime_t deadline;
-	switch(ev) {
-		case EV_SCAN_TIMEOUT:
-			stream->println(F("EV_SCAN_TIMEOUT"));
-			break;
-		case EV_JOINING:
+    switch(ev) {
+        case EV_SCAN_TIMEOUT:
+            stream->println(F("EV_SCAN_TIMEOUT"));
+            break;
+        case EV_JOINING:
             stream->println(F("EV_JOINING"));
-			break;
-		case EV_JOINED:
+            break;
+        case EV_JOINED:
             stream->println(F("EV_JOINED"));
             LMIC_setLinkCheckMode(0);
             LoRa::set_joined(true);
-			break;
-		case EV_JOIN_FAILED:
+            break;
+        case EV_JOIN_FAILED:
             stream->println(F("EV_JOIN_FAILED"));
-			break;
-		case EV_TXCOMPLETE:
+            break;
+        case EV_TXCOMPLETE:
             // Check if all arduino-lmic is finished sending pending messages
             // If not keep in a tight loop with runloop_once()
             // Main query here is to see that the desired sleep time can be
@@ -183,16 +180,16 @@ void LoRa::on_event(ev_t ev) {
                     stream->println(delta_time_s);
                 }
             }
-			break;
-		case EV_TXSTART:
+            break;
+        case EV_TXSTART:
             stream->println(F("EV_TXSTART"));
-			break;
-		case EV_JOIN_TXCOMPLETE:
+            break;
+        case EV_JOIN_TXCOMPLETE:
             stream->println(F("EV_JOIN_TXCOMPLETE: no JoinAccept"));
-			break;
-		default:
+            break;
+        default:
             stream->print(F("Unknown event: "));
             stream->println((unsigned) ev);
-			break;
-	}
+            break;
+    }
 }
